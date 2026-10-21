@@ -79,6 +79,9 @@ The image-output container is created empty. This package does not configure an 
 
 ## GitHub Actions
 
-Use a fork or copy of this repository. Connect it to your Azure tenant using [Azure's GitHub Actions OIDC setup guide](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure), following the connection inputs in the [deployment workflow](../.github/workflows/deploy.yml). Scope its Azure permissions to the target resource group as described above.
+1. Fork or copy this repository, enable Actions in your copy, and commit your changes to [config/demo.json](../config/demo.json).
+2. Under **Settings → Environments**, create an environment named `demo`.
+3. Connect that environment to your own Azure tenant using [Azure's GitHub Actions OIDC setup guide](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure-openid-connect). Use your repository and its `demo` environment for the federation binding. Supply your own Azure connection inputs, shown in the [deployment workflow](../.github/workflows/deploy.yml), through the environment's settings. Give the deployment identity the permissions under **Prepare your Azure target** above.
+4. Open **Actions → Deploy demo → Run workflow**. Choose **WhatIf** to review the changes, then **Deploy** to create the infrastructure, upload the PDFs, and configure the knowledge source.
 
-Then open **Actions → Deploy demo → Run workflow**. Choose **WhatIf** to review the changes, then **Deploy** to create the resources and upload the PDFs. Deployment runs manually; the separate validation workflow runs on pushes and pull requests.
+Keep tenant-specific connection values in GitHub's environment settings. Deployment runs manually; the separate validation workflow runs on pushes and pull requests.
