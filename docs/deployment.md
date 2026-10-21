@@ -11,9 +11,9 @@ az bicep install --version v0.48.1
 
 Select a subscription and an existing resource group in your tenant. An administrator must register `Microsoft.Search`, `Microsoft.CognitiveServices`, and `Microsoft.Storage` in the subscription if needed.
 
-The deploying identity needs **Contributor** and **Storage Blob Data Contributor** at the target resource group. These permissions cover resource deployment and the two PDF uploads.
+The deploying identity needs **Contributor**, **Storage Blob Data Contributor**, and **Search Index Data Contributor** at the target resource group. These permissions cover resource deployment, the two PDF uploads, and keyless blob knowledge-source setup. Contributor includes the Search service management permissions; it does not include Search index data access. See the [blob knowledge-source prerequisites](https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-blob#prerequisites).
 
-It also needs permission to create the template's two access grants for Search. An administrator can delegate role assignment for **Storage Blob Data Reader** and **Cognitive Services OpenAI User** at the relevant scopes. Scope this permission to the deployment target; do not grant directory administration for deployment.
+It also needs permission to create the template's two access grants for Search. An administrator can use a conditional **Role Based Access Control Administrator** assignment scoped to the target resource group, allowing only **Storage Blob Data Reader** and **Cognitive Services OpenAI User** assignments to service principals. The incremental deployment does not need permission to delete role assignments. Do not grant directory administration for deployment.
 
 ## 2. Set the resource names
 
