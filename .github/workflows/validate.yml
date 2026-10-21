@@ -24,3 +24,6 @@ jobs:
       - name: Check deployment safeguards
         shell: pwsh
         run: ./tests/Test-Guards.ps1
+      - name: Check knowledge source setup
+        shell: pwsh
+        run: ./tests/Test-KnowledgeSource.ps1

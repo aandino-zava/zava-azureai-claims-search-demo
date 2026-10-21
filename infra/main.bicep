@@ -23,6 +23,25 @@ param storageAccountName string
 @maxLength(63)
 param containerName string
 
+@minLength(3)
+@maxLength(63)
+param imageOutputContainerName string
+
+@minLength(2)
+@maxLength(100)
+param knowledgeSourceName string
+
+type ModelDeployment = {
+  name: string
+  modelName: string
+  modelVersion: string
+  sku: string
+  capacity: int
+}
+
+param embeddingDeployment ModelDeployment
+param chatDeployment ModelDeployment
+
 var tags = {
   managedBy: 'zava-azureai-claims-search-demo'
 }
@@ -118,8 +137,74 @@ resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@20
   }
 }
 
+resource imageOutputContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2025-06-01' = {
+  name: '${storage.name}/default/${imageOutputContainerName}'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+resource embeddingModel 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = {
+  parent: foundry
+  name: embeddingDeployment.name
+  sku: {
+    name: embeddingDeployment.sku
+    capacity: embeddingDeployment.capacity
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: embeddingDeployment.modelName
+      version: embeddingDeployment.modelVersion
+    }
+    versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
+  }
+}
+
+resource chatModel 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = {
+  parent: foundry
+  name: chatDeployment.name
+  sku: {
+    name: chatDeployment.sku
+    capacity: chatDeployment.capacity
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: chatDeployment.modelName
+      version: chatDeployment.modelVersion
+    }
+    versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
+  }
+  dependsOn: [
+    embeddingModel
+  ]
+}
+
+resource searchBlobReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(storage.id, search.id, 'blob-reader')
+  scope: storage
+  properties: {
+    principalId: search.identity!.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')
+  }
+}
+
+resource searchModelUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(foundry.id, search.id, 'openai-user')
+  scope: foundry
+  properties: {
+    principalId: search.identity!.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
+  }
+}
+
 output searchServiceId string = search.id
 output foundryId string = foundry.id
 output projectId string = project.id
 output storageAccountId string = storage.id
 output containerId string = container.id
+output imageOutputContainerId string = imageOutputContainer.id
+output knowledgeSourceEndpoint string = 'https://${search.name}.search.windows.net/knowledgesources/${knowledgeSourceName}'

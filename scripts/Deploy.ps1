@@ -16,6 +16,9 @@ Write-Host 'Checking the selected deployment target.'
 Invoke-Az -Arguments @('group', 'show', '--name', $ResourceGroupName, '--subscription', "$SubscriptionId", '--output', 'none') | Out-Null
 $resources = @(Invoke-AzJson -Arguments @('resource', 'list', '--resource-group', $ResourceGroupName, '--subscription', "$SubscriptionId"))
 Assert-TargetOwnership -Resources $resources -Configuration $config
+$knowledgeDefinition = New-KnowledgeSourceDefinition -Configuration $config -SubscriptionId $SubscriptionId -ResourceGroupName $ResourceGroupName
+$knowledgeDefinition | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $script:RepositoryRoot '.build/knowledge-source.json') -Encoding utf8
+Write-Host 'Knowledge source plan saved in .build/knowledge-source.json. REST setup runs only in Deploy mode.'
 
 # Provider validation evaluates the selected names, region, SKU, policy, and permissions.
 $deploymentArguments = @('--subscription', "$SubscriptionId", '--resource-group', $ResourceGroupName, '--name', 'zava-claims-demo', '--template-file', (Join-Path $script:RepositoryRoot '.build/main.json'), '--parameters', "@$parametersPath")
@@ -26,4 +29,5 @@ if ($Mode -eq 'WhatIf') { return }
 $deployment = Invoke-AzJson -Arguments (@('deployment', 'group', 'create') + $deploymentArguments)
 if ($deployment.properties.provisioningState -ne 'Succeeded') { throw 'Deployment did not report Succeeded.' }
 & (Join-Path $PSScriptRoot 'Upload-Claims.ps1') -SubscriptionId $SubscriptionId -ResourceGroupName $ResourceGroupName -ConfigurationPath $ConfigurationPath
-Write-Host 'Deployment complete: services, project, container, and two verified PDF uploads.'
+& (Join-Path $PSScriptRoot 'Configure-KnowledgeSource.ps1') -SubscriptionId $SubscriptionId -ResourceGroupName $ResourceGroupName -ConfigurationPath $ConfigurationPath
+Write-Host 'Deployment complete: infrastructure, two verified PDF uploads, and the knowledge source definition. Check Search for asynchronous ingestion results.'

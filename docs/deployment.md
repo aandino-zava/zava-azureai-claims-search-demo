@@ -13,6 +13,8 @@ Select a subscription and an existing resource group in your tenant. An administ
 
 The deploying identity needs **Contributor** and **Storage Blob Data Contributor** at the target resource group. These permissions cover resource deployment and the two PDF uploads.
 
+It also needs permission to create the template's two access grants for Search. An administrator can delegate role assignment for **Storage Blob Data Reader** and **Cognitive Services OpenAI User** at the relevant scopes. Scope this permission to the deployment target; do not grant directory administration for deployment.
+
 ## 2. Set the resource names
 
 Edit [config/demo.json](../config/demo.json):
@@ -25,10 +27,14 @@ Edit [config/demo.json](../config/demo.json):
 | `projectName` | Foundry project name |
 | `storageAccountName` | Globally unique storage account name |
 | `containerName` | Container for the two PDFs |
+| `imageOutputContainerName` | Separate private container for image outputs |
+| `knowledgeSourceName` | Stable name for the blob knowledge source |
+| `embeddingDeployment` | Embedding deployment name, model version, SKU, and capacity |
+| `chatDeployment` | Image-description deployment name, model version, SKU, and capacity |
 
 Replace the example service names with your own available names. The same configuration is used for validation, deployment, and file upload. To use another configuration file locally, pass `-ConfigurationPath '<path>'` to the scripts.
 
-The template uses Search Standard, Foundry S0, and Storage Standard ZRS with public service endpoints. Choose a region and subscription that support this configuration.
+The template uses Search Standard, Foundry S0, and Storage Standard ZRS with public service endpoints. The example model settings are `text-embedding-3-large` version `1` on Standard capacity `1`, and `gpt-5-mini` version `2025-08-07` on GlobalStandard capacity `10`. Choose a region and subscription with support and quota for these deployments, or explicitly configure supported model settings.
 
 ## 3. Preview and deploy
 
@@ -45,9 +51,11 @@ Run these commands from the repository root:
 | --- | --- |
 | Validate | Check the package and run ARM provider validation |
 | WhatIf | Validate, then display proposed changes |
-| Deploy | Validate, display changes, deploy, and upload both PDFs |
+| Deploy | Validate, display changes, deploy infrastructure, upload both PDFs, and configure the knowledge source |
 
 Review the WhatIf result before choosing Deploy. Validation checks the selected destination but does not reserve service capacity.
+
+ARM validation and WhatIf cover the Bicep resources. The separate Search REST request is saved to `.build/knowledge-source.json` for review and runs only in Deploy mode. Search knowledge sources are data-plane objects, so they are configured after Bicep through the `2025-11-01-preview` Search API.
 
 Deployment uses incremental mode. Reruns keep the configured names and replace the same two blob files. Matching resources created outside this package are rejected; resources managed by the package must retain their region and ownership tag.
 
@@ -58,6 +66,16 @@ If an upload fails after resource deployment, resolve the reported access or con
 ```
 
 The script uploads only the two manifest files, downloads them to verify their SHA-256 hashes, and preserves other blobs in the container.
+
+After the infrastructure and files are ready, the knowledge source can be configured or resumed separately:
+
+```powershell
+./scripts/Configure-KnowledgeSource.ps1 -SubscriptionId '<subscription-id>' -ResourceGroupName '<resource-group>'
+```
+
+The source uses minimal content extraction, image verbalization, and a daily (`P1D`) ingestion schedule. Search uses its managed identity to access storage and the two models. Setup reads back the saved definition; ingestion completes asynchronously. Retries for access propagation are bounded, and updates use the existing definition's ETag to avoid overwriting a concurrent change.
+
+The image-output container is created empty. This package does not configure an image-export projection or asset-store binding.
 
 ## GitHub Actions
 
