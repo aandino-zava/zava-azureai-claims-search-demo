@@ -1,0 +1,8 @@
+{
+  "location": "eastus",
+  "searchServiceName": "search-zavaclaims-demo",
+  "foundryName": "foundry-zavaclaims-demo",
+  "projectName": "ZavaMED-Claims",
+  "storageAccountName": "stzavaclaimsdemo",
+  "containerName": "claims-docs"
+}

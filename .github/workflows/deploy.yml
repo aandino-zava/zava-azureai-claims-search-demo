@@ -1,0 +1,55 @@
+name: Deploy demo
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Operation to run against the configured Azure target
+        required: true
+        default: WhatIf
+        type: choice
+        options: [Validate, WhatIf, Deploy]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: zava-claims-demo
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: demo
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      DEPLOYMENT_MODE: ${{ inputs.mode }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check environment variables
+        shell: pwsh
+        run: |
+          foreach ($name in @('AZURE_CLIENT_ID', 'AZURE_TENANT_ID', 'AZURE_SUBSCRIPTION_ID', 'AZURE_RESOURCE_GROUP')) {
+            if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
+              throw "Set $name in the demo GitHub environment."
+            }
+          }
+      - name: Sign in to Azure with OIDC
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+      - name: Install Bicep
+        run: az bicep install --version v0.48.1
+      - name: Run selected operation
+        shell: pwsh
+        run: |
+          ./scripts/Deploy.ps1 -SubscriptionId $env:AZURE_SUBSCRIPTION_ID `
+            -ResourceGroupName $env:AZURE_RESOURCE_GROUP -Mode $env:DEPLOYMENT_MODE

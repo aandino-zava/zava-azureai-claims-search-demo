@@ -1,0 +1,26 @@
+name: Validate package
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Bicep
+        run: az bicep install --version v0.48.1
+      - name: Compile and check package
+        shell: pwsh
+        run: ./scripts/Test-Package.ps1
+      - name: Check deployment safeguards
+        shell: pwsh
+        run: ./tests/Test-Guards.ps1
