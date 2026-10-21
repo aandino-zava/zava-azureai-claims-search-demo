@@ -12,7 +12,7 @@ Run from PowerShell:
 
 The checks compile Bicep, validate PowerShell syntax, match configuration fields to template parameters, and check the declared services, project, two containers, two model deployments, and Search access grants. Both PDFs are checked against their sizes, SHA-256 hashes, and PDF headers.
 
-Safeguard tests check that unowned resources, implicit region changes, and altered PDF contents are rejected. The **Validate package** GitHub Actions workflow runs the same checks.
+Safeguard tests check that unowned resources, implicit region changes, and altered PDF contents are rejected. Region checks cover both the configured region and an alternate configuration. The **Validate package** GitHub Actions workflow runs the same checks.
 
 Knowledge source tests check parameter overrides, model and storage references, extraction settings, and the daily schedule. A simulated REST boundary checks conditional creation, ETag updates, bounded permission retries, and readback failures. These tests do not call Azure.
 

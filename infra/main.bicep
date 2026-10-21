@@ -207,4 +207,4 @@ output projectId string = project.id
 output storageAccountId string = storage.id
 output containerId string = container.id
 output imageOutputContainerId string = imageOutputContainer.id
-output knowledgeSourceEndpoint string = 'https://${search.name}.search.windows.net/knowledgesources/${knowledgeSourceName}'
+output knowledgeSourceEndpoint string = 'https://${search.name}.search.windows.net/knowledgesources(\'${knowledgeSourceName}\')?api-version=2025-11-01-preview'

@@ -36,6 +36,8 @@ Replace the example service names with your own available names. The same config
 
 The template uses Search Standard, Foundry S0, and Storage Standard ZRS with public service endpoints. The example model settings are `text-embedding-3-large` version `1` on Standard capacity `1`, and `gpt-5-mini` version `2025-08-07` on GlobalStandard capacity `10`. Choose a region and subscription with support and quota for these deployments, or explicitly configure supported model settings.
 
+Network security perimeters, private endpoints, and shared hub networking are not provisioned or associated by this package. A tenant that requires those controls needs a separate network configuration and a runner with access to the storage and Search endpoints. This template's public-endpoint settings are not a replacement for that configuration.
+
 ## 3. Preview and deploy
 
 Run these commands from the repository root:

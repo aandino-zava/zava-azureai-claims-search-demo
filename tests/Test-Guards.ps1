@@ -18,15 +18,20 @@ catch {
 if (-not $rejected) { throw 'An unowned existing target was accepted.' }
 $owned = $untagged.Clone()
 $owned.tags = @{ managedBy = 'zava-azureai-claims-search-demo' }
-Assert-TargetOwnership -Resources @($owned) -Configuration $config
-$owned.location = 'westus2'
-$rejected = $false
-try { Assert-TargetOwnership -Resources @($owned) -Configuration $config }
-catch {
-    if ($_.Exception.Message -notlike '*different region*') { throw }
-    $rejected = $true
+foreach ($region in @($config.location, 'westus2') | Select-Object -Unique) {
+    $regionConfiguration = $config.Clone()
+    $regionConfiguration.location = $region
+    $owned.location = $region
+    Assert-TargetOwnership -Resources @($owned) -Configuration $regionConfiguration
+    $owned.location = if ($region -ieq 'westus2') { 'eastus' } else { 'westus2' }
+    $rejected = $false
+    try { Assert-TargetOwnership -Resources @($owned) -Configuration $regionConfiguration }
+    catch {
+        if ($_.Exception.Message -notlike '*different region*') { throw }
+        $rejected = $true
+    }
+    if (-not $rejected) { throw 'An implicit region change was accepted.' }
 }
-if (-not $rejected) { throw 'An implicit region change was accepted.' }
 
 $originalRoot = $script:RepositoryRoot
 $fixture = Join-Path $originalRoot ('.build/guard-fixture-' + [guid]::NewGuid().ToString('N'))

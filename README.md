@@ -42,7 +42,7 @@ The blob knowledge source generates its data source, index, indexer, and skillse
 
 The image-output container is provisioned separately. No image-export projection or asset-store binding is configured, so creating the knowledge source does not populate that container.
 
-The demo uses public service endpoints, private blob containers, and HTTPS for storage access. Bicep grants Search permission to read storage and invoke the Foundry models. The deployment scripts update resources managed by this package and reject matching resources created outside it.
+The demo uses public service endpoints, private blob containers, and HTTPS for storage access. Network security perimeters, private endpoints, and shared hub networking are outside this standalone package. Bicep grants Search permission to read storage and invoke the Foundry models. The deployment scripts update resources managed by this package and reject matching resources created outside it.
 
 ## Included documents
 
